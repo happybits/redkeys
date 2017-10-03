@@ -1,15 +1,18 @@
 import argparse
 import redis
-import redislite
 import sys
 from signal import signal, SIGTERM
 from .api import RedisKeyspaceIterator, KeyspaceTracker
+try:
+    import redislite
+except ImportError:
+    redislite = None
 
 __all__ = ['main']
 
 
 def get_redis_connection(host):
-    if host.startswith("redislite://"):
+    if redislite and host.startswith("redislite://"):
         return redislite.StrictRedis(host[12:])
     else:
         return redis.StrictRedis.from_url(host)

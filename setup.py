@@ -53,7 +53,7 @@ setup(
     keywords='redis',
     packages=[NAME],
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 4 - Beta',
         'Programming Language :: Python',
         'Programming Language :: Python',
         'Programming Language :: Python :: Implementation :: CPython',

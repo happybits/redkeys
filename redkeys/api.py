@@ -19,11 +19,11 @@ class RedisKeyspaceIterator(object):
             cursor, keys = r.scan(cursor=cursor, count=500)
             p = r.pipeline(transaction=False)
             for key in keys:
-                p.debug_object(key)
+                p.dump(key)
             debug_result = p.execute()
 
             for i, key in enumerate(keys):
-                size = int(debug_result[i]['serializedlength']) + len(key) + 20
+                size = len(debug_result[i]) + len(key) + 20
                 key = key.decode('utf-8')
                 match = self.keyspace_pattern.match(key)
 
