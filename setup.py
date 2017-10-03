@@ -5,7 +5,7 @@ import os
 from os import path
 from setuptools import setup
 from distutils.cmd import Command
-import redkeys
+
 
 NAME = 'redkeys'
 
@@ -17,7 +17,8 @@ with open(os.path.join(ROOTDIR, 'README.rst')) as f:
 with open(os.path.join(ROOTDIR, 'RELEASE.rst')) as f:
     history = f.read()
 
-version = redkeys.__version__
+with open(os.path.join(ROOTDIR, 'redkeys', 'VERSION')) as f:
+    version = str(f.read().strip())
 
 
 class TestCommand(Command):
