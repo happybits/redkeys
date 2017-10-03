@@ -1,0 +1,2 @@
+redislite>=3.0.287
+redis>=2.10.2
