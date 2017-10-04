@@ -15,24 +15,20 @@ class RedisKeyspaceIterator(object):
     def process(self):
         cursor = 0
         r = self.conn
+        patterns = [self.keyspace_pattern, self.index_pattern]
         while True:
             cursor, keys = r.scan(cursor=cursor, count=500)
-            p = r.pipeline(transaction=False)
+
             for key in keys:
-                p.dump(key)
-            debug_result = p.execute()
-
-            for i, key in enumerate(keys):
-                size = len(debug_result[i]) + len(key) + 20
                 key = key.decode('utf-8')
-                match = self.keyspace_pattern.match(key)
-
+                match = None
+                for pattern in patterns:
+                    match = pattern.match(key)
+                    if match:
+                        yield match.group(1)
+                        break
                 if not match:
-                    match = self.index_pattern.match(key)
-
-                keyspace = match.group(1) if match else '__unknown__'
-
-                yield keyspace, size
+                    yield '__unknown__'
 
             if cursor == 0:
                 break
@@ -45,15 +41,14 @@ class KeyspaceEmitter(object):
 
     def process(self):
         for keyspace, size in self.iterator.process():
-            self.callback(keyspace, size)
-            yield keyspace, size
+            self.callback(keyspace)
+            yield keyspace
 
 
 class KeyspaceTracker(object):
     def __init__(self, *keyspace_iterators):
         self.keyspaces = {}
-        self.total_count = 0
-        self.total_size = 0
+        self.total = 0
         self.keyspace_iterators = keyspace_iterators
 
     def process(self):
@@ -61,16 +56,13 @@ class KeyspaceTracker(object):
         keyspace_iterators = self.keyspace_iterators
         try:
             for iterator in keyspace_iterators:
-                for keyspace, size in iterator.process():
+                for keyspace in iterator.process():
                     try:
-                        tracker = keyspaces[keyspace]
+                        keyspaces[keyspace] += 1
                     except KeyError:
-                        keyspaces[keyspace] = tracker = {'count': 0, 'size': 0}
-                    tracker['count'] += 1
-                    tracker['size'] += size
-                    self.total_size += size
-                    self.total_count += 1
-                    yield self.total_count
+                        keyspaces[keyspace] = 1
+                    self.total += 1
+                    yield self.total
         except KeyboardInterrupt:
             pass
 
@@ -83,9 +75,10 @@ class KeyspaceTracker(object):
         self.keyspace_iterators = []
 
     def stats_output(self):
-        total_size = self.total_size
-        for k, v in sorted(self.keyspaces.items(), key=lambda x: x[1]['size']):
-            percentage = (v['size'] / total_size) * 100
-            average = v['size'] / v['count']
-            yield "%s bytes=%d count=%d  avg-bytes=%.2f percentage=%.2f" % (
-                k, v['size'], v['count'], average, percentage)
+        total = self.total
+        for k, v in sorted(self.keyspaces.items(), key=lambda x: x[1]):
+            percentage = (v / total) * 100
+            yield "%s: %.1f%%" % (k, percentage)
+
+        yield ""
+        yield "sampled: %d" % total

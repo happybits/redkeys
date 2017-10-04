@@ -3,6 +3,7 @@ import redis
 import sys
 from signal import signal, SIGTERM
 from .api import RedisKeyspaceIterator, KeyspaceTracker
+
 try:
     import redislite
 except ImportError:
@@ -34,7 +35,7 @@ def process(hosts, out, err=None):
     for line in tracker.stats_output():
         out.write(u'%s\n' % line)
 
-    out.write(u'\n======================\n')
+    out.write(u'======================\n')
 
 
 def parse_args(args=None):

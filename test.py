@@ -30,10 +30,10 @@ def clean():
 class BasicTestCase(unittest.TestCase):
     data = [
         ('A{foo}', '1'),
-        ('A{bar}', '11'),
-        ('A{bazz}', '111'),
+        ('A{bar}', '1'),
+        ('A{bazz}', '1'),
         ('B{foo}', '1'),
-        ('B{bar}', '11'),
+        ('B{bar}', '1'),
     ]
 
     def setUp(self):
@@ -44,17 +44,17 @@ class BasicTestCase(unittest.TestCase):
     def test(self):
         with redkeys.KeyspaceTracker(redkeys.RedisKeyspaceIterator(SRC)) as t:
             self.assertEqual(t.keyspaces,
-                             {'B': {'count': 2, 'size': 78},
-                              'A': {'count': 3, 'size': 118}})
+                             {'B': 2,
+                              'A': 3})
 
     def test_cli(self):
         out = StringIO()
         redkeys.main(["redislite://%s" % SRC_RDB], out=out)
         output = out.getvalue().strip()
-        self.assertIn(
-            'B bytes=78 count=2  avg-bytes=39.00 percentage=39.80', output)
-        self.assertIn(
-            'A bytes=118 count=3  avg-bytes=39.33 percentage=60.20', output)
+        print(output)
+        self.assertIn('B: 40.0%', output)
+        self.assertIn('A: 60.0%', output)
+        self.assertIn('sampled: 5', output)
 
 
 if __name__ == '__main__':
