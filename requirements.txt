@@ -1,2 +1,2 @@
-redislite>=5.0.165407
-redis>=3.5.3
+redis==5.0.8
+redislite==6.2.912183
